@@ -246,17 +246,23 @@ dialog::backdrop { background: #17263b55; }
 @media (prefers-reduced-motion: reduce) {
   .fade-image { transition: none; }
 }
-.reading-dialog { padding-top: 0; overscroll-behavior: contain; }
-.reader-toolbar {
-  position: sticky;
-  top: 0;
-  z-index: 2;
+.reading-dialog[open] { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+.reader-content { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 20px; }
+.reader-close {
+  order: 1;
+  flex: none;
+  width: 100%;
+  min-height: 48px;
   display: flex;
+  align-items: center;
   justify-content: center;
-  margin-inline: -20px;
-  margin-bottom: 15px;
-  padding: 8px;
+  gap: 6px;
+  border-top: 1px solid var(--border);
   background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  color: var(--body);
+  font-size: 14px;
+  font-weight: 650;
 }
+.reader-close:hover { background: var(--page); }
+.reader-close:focus-visible { outline-offset: -4px; outline-color: currentColor; }
 .reading-dialog .dialog-top h2 { font-size: clamp(17px, 3vw, 21px); line-height: 1.3; }

@@ -438,15 +438,15 @@ function Modal({ title, close, children, wide = false, reading = false }: { titl
     if (dialog && !dialog.open) dialog.showModal()
     return () => { if (dialog?.open) dialog.close() }
   }, [dialog])
+  const heading = <div className="dialog-top">
+    <h2 id="dialog-title">{title}</h2>
+    {!reading && <button className="settings-button" aria-label="Close dialog" onClick={close}><X size={20} /></button>}
+  </div>
   return <dialog ref={setDialog} className={(wide ? 'wide' : '') + (reading ? ' reading-dialog' : '')} onCancel={event => { event.preventDefault(); close() }} aria-labelledby="dialog-title">
-    {reading && <div className="reader-toolbar">
-      <button className="button" aria-label="Close reader" onClick={close}><X size={16} /> Close</button>
-    </div>}
-    <div className="dialog-top">
-      <h2 id="dialog-title">{title}</h2>
-      {!reading && <button className="settings-button" aria-label="Close dialog" onClick={close}><X size={20} /></button>}
-    </div>
-    {children}
+    {reading ? <>
+      <button type="button" className="reader-close" aria-label="Close reader" onClick={close}><X size={16} /> Close</button>
+      <div className="reader-content">{heading}{children}</div>
+    </> : <>{heading}{children}</>}
   </dialog>
 }
 function NoteDialog({ job, application, close, update }: { job: Job; application?: Application; close: () => void; update: (job: Job, change: Partial<Application>) => Promise<boolean> }) {
