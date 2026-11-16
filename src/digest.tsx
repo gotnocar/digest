@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { ArrowUpRight, Bookmark, Check, MapPin } from 'lucide-react'
+import { useRef, useState, type ReactNode } from 'react'
+import { ArrowUpRight, Bookmark, Check, ChevronLeft, ChevronRight, MapPin } from 'lucide-react'
 import { displayDate, shiftDay, validUrl, type Article, type Event, type Listing, type Savable } from './model'
 
 export function SaveButton({ record, saved, ready, save, iconOnly = false }: {
@@ -34,8 +34,36 @@ export function Outlet({ article, dark }: { article: Article; dark: boolean }) {
   </span>
 }
 
-export function ArticleCard({ article, dark, read, open, children }: {
-  article: Article; dark: boolean; read: boolean; open: () => void; children: React.ReactNode
+export function ArticleCarousel({ articles, render }: { articles: Article[]; render: (article: Article) => ReactNode }) {
+  const track = useRef<HTMLDivElement>(null)
+  const [active, setActive] = useState(0)
+  const index = Math.min(active, articles.length - 1)
+  const go = (step: number) => {
+    const element = track.current
+    if (!element) return
+    const next = Math.max(0, Math.min(articles.length - 1, index + step))
+    element.scrollTo({ left: next * element.clientWidth })
+  }
+  return <section className="group" aria-labelledby="top-news">
+    <div className="carousel-heading">
+      <h3 id="top-news">Top News</h3>
+      {articles.length > 1 && <div className="carousel-controls">
+        <button className="icon-button button" aria-label="Previous article" disabled={index === 0} onClick={() => go(-1)}><ChevronLeft size={18} /></button>
+        <span aria-live="polite">{index + 1} / {articles.length}</span>
+        <button className="icon-button button" aria-label="Next article" disabled={index === articles.length - 1} onClick={() => go(1)}><ChevronRight size={18} /></button>
+      </div>}
+    </div>
+    <div className="article-carousel" ref={track} onScroll={event => {
+      const element = event.currentTarget
+      setActive(Math.max(0, Math.round(element.scrollLeft / element.clientWidth)))
+    }}>
+      {articles.map(article => <div className="article-slide" key={article.id}>{render(article)}</div>)}
+    </div>
+  </section>
+}
+
+export function ArticleCard({ article, dark, read, open, preview, children }: {
+  article: Article; dark: boolean; read: boolean; open: () => void; preview?: boolean; children: React.ReactNode
 }) {
   const title = <>{article.emoji && <span>{article.emoji} </span>}{article.title}</>
   return <article className="card digest-article clickable-card">
@@ -44,6 +72,7 @@ export function ArticleCard({ article, dark, read, open, children }: {
     </div>
     <h3><button className="record-title card-target" onClick={open}>{title}</button></h3>
     {article.description && <p className="description news-summary">{article.description}</p>}
+    {preview && <ArticleImage article={article} preview />}
     {children && <div className="card-actions">{children}</div>}
   </article>
 }
@@ -123,9 +152,9 @@ export function Schedule({ items, today, isOpportunity, render }: {
   </>
 }
 
-export function ArticleImage({ article }: { article: Article }) {
+export function ArticleImage({ article, preview = false }: { article: Article; preview?: boolean }) {
   const [failed, setFailed] = useState(false)
   const src = validUrl(article.image)
-  return src && !failed ? <FadingImage className="reader-image" src={src} onError={() => setFailed(true)} />
+  return src && !failed ? <FadingImage className={preview ? "preview-image" : "reader-image"} lazy={preview} src={src} onError={() => setFailed(true)} />
     : null
 }

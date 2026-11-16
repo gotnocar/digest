@@ -10,7 +10,7 @@ import {
   displayDate, emptyPersonal, isProfile, localDate, readBackup, shiftDay, statuses, textKey, validUrl,
   type Application, type Article, type Event, type Job, type Listing, type Personal, type Profile, type Savable, type Status
 } from './model'
-import { ArticleCard, ArticleImage, Outlet, SaveButton, Schedule, ScheduleCard, SourceLink, TransitLink } from './digest'
+import { ArticleCard, ArticleCarousel, ArticleImage, Outlet, SaveButton, Schedule, ScheduleCard, SourceLink, TransitLink } from './digest'
 import { useTheme } from './theme'
 import './style.css'
 
@@ -175,10 +175,11 @@ function App() {
   const currentPage = Math.min(page, pages)
   const visibleJobs = filteredJobs.slice((currentPage - 1) * LIST_SIZE, currentPage * LIST_SIZE)
   const allArticles = snapshot?.articles ?? []
+  const featuredArticles = allArticles.filter(article => article.feature)
+  const latestStories = allArticles.filter(article => !article.feature)
   const reading = Object.values(personal.reading ?? {})
     .filter(entry => entry.article.feature && !entry.read)
     .sort((a, b) => b.openedAt.localeCompare(a.openedAt))
-  const readingIds = new Set(reading.map(entry => entry.article.id))
   const activity = Object.values(personal.activity ?? {}).sort((a, b) => b.completedAt.localeCompare(a.completedAt))
   const attended = new Set(activity.map(entry => entry.item.id))
   const yesterday = shiftDay(today, -1)
@@ -205,8 +206,8 @@ function App() {
       <Check size={15} /> {item.kind === 'event' ? (complete ? 'Attended' : 'Mark attended') : (complete ? 'Sent' : 'Mark sent')}
     </button>
   }
-  const card = (record: Savable, compact = false, tracked = false) => {
-    if (record.kind === 'article') return <ArticleCard key={record.id} article={record} dark={dark}
+  const card = (record: Savable, compact = false, tracked = false, preview = false) => {
+    if (record.kind === 'article') return <ArticleCard key={record.id} article={record} dark={dark} preview={preview}
       read={!!personal.reading?.[record.id]?.read} open={() => openArticle(record)}>
       {record.feature && saveButton(record)}
     </ArticleCard>
@@ -278,15 +279,13 @@ function App() {
           </div>
         </> : <Empty icon={<BriefcaseBusiness />} title={loading ? 'Loading jobs…' : 'No jobs match this view'} detail={search ? 'Try a different search or filter.' : 'New listings appear after the daily update.'} />)}
         {view === 'News' && <>
+          {featuredArticles.length > 0 && <ArticleCarousel articles={featuredArticles} render={article => card(article, false, false, true)} />}
           {reading.length > 0 && <section className="group"><h3>Continue reading</h3>
             <div className="cards article-grid">{reading.map(({ article }) => card(allArticles.find(item => item.id === article.id) ?? article))}</div>
           </section>}
-          {allArticles.length > 0 && ([['Top News', true], ['Latest stories', false]] as const).map(([label, feature]) => {
-            const group = allArticles.filter(article => article.feature === feature && !readingIds.has(article.id))
-            return group.length > 0 && <section className="group" key={label}><h3>{label}</h3>
-              <div className="cards article-grid">{group.map(article => card(article))}</div>
-            </section>
-          })}
+          {latestStories.length > 0 && <section className="group"><h3>Latest stories</h3>
+            <div className="cards article-grid">{latestStories.map(article => card(article))}</div>
+          </section>}
           {!allArticles.length && !reading.length && <Empty icon={<Newspaper />} title={loading ? 'Loading news…' : 'No recent news'} detail="New articles appear after the next spreadsheet update." />}
         </>}
         {(view === 'Events' || view === 'Networking') && <Schedule
