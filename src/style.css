@@ -257,12 +257,9 @@ dialog::backdrop { background: #17263b55; }
   align-items: center;
   justify-content: center;
   gap: 6px;
-  border-top: 1px solid var(--border);
-  background: var(--surface);
   color: var(--body);
   font-size: 14px;
   font-weight: 650;
 }
-.reader-close:hover { background: var(--page); }
-.reader-close:focus-visible { outline-offset: -4px; outline-color: currentColor; }
+.reader-close:focus-visible { outline: none; text-decoration: underline; text-underline-offset: 3px; }
 .reading-dialog .dialog-top h2 { font-size: clamp(17px, 3vw, 21px); line-height: 1.3; }
