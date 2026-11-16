@@ -1,0 +1,14 @@
+{
+  "id": "./",
+  "name": "Andrew’s Digest",
+  "short_name": "Digest",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f8fa",
+  "theme_color": "#f6f8fa",
+  "icons": [
+    { "src": "./icons/rocket-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icons/rocket-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
