@@ -99,7 +99,7 @@ function App() {
   })
   const openArticle = (article: Article) => {
     setReader(article)
-    if (storageReady) void commit(current => ({
+    if (article.feature && storageReady) void commit(current => ({
       ...current,
       reading: {
         ...current.reading,
@@ -351,7 +351,7 @@ function App() {
         </div>
       </section>}
     </Modal>}
-    {reader && <Modal title={reader.title} close={() => setReader(undefined)} wide>
+    {reader && <Modal title={reader.title} close={() => setReader(undefined)} wide reading>
       <div className="article-byline dialog-subtitle"><Outlet article={reader} dark={dark} />
         {reader.author && <span>{reader.author}</span>}<span>{displayDate(reader.date)}</span>
       </div>
@@ -359,10 +359,10 @@ function App() {
       {(reader.body || reader.description) && <p className="reader-body">{reader.body || reader.description}</p>}
       <div className="modal-actions reader-actions">
         <SourceLink url={reader.url} label="Open original" />
-        {saveButton(reader)}
-        <button className="button" disabled={!storageReady} onClick={() => toggleRead(reader)} aria-pressed={!!personal.reading?.[reader.id]?.read}>
+        {reader.feature && saveButton(reader)}
+        {reader.feature && <button className="button" disabled={!storageReady} onClick={() => toggleRead(reader)} aria-pressed={!!personal.reading?.[reader.id]?.read}>
           <Check size={16} /> {personal.reading?.[reader.id]?.read ? 'Read · Undo' : 'Mark as read'}
-        </button>
+        </button>}
       </div>
     </Modal>}
     {detail && <Modal title={detail.title} close={() => setDetail(undefined)} wide>
@@ -432,14 +432,20 @@ function OpportunityCard({ record, today, saved, application, storageReady, onSa
     </div>
   </article>
 }
-function Modal({ title, close, children, wide = false }: { title: string; close: () => void; children: ReactNode; wide?: boolean }) {
+function Modal({ title, close, children, wide = false, reading = false }: { title: string; close: () => void; children: ReactNode; wide?: boolean; reading?: boolean }) {
   const [dialog, setDialog] = useState<HTMLDialogElement | null>(null)
   useEffect(() => {
     if (dialog && !dialog.open) dialog.showModal()
     return () => { if (dialog?.open) dialog.close() }
   }, [dialog])
-  return <dialog ref={setDialog} className={wide ? 'wide' : ''} onCancel={event => { event.preventDefault(); close() }} aria-labelledby="dialog-title">
-    <div className="dialog-top"><h2 id="dialog-title">{title}</h2><button className="settings-button" aria-label="Close dialog" onClick={close}><X size={20} /></button></div>
+  return <dialog ref={setDialog} className={(wide ? 'wide' : '') + (reading ? ' reading-dialog' : '')} onCancel={event => { event.preventDefault(); close() }} aria-labelledby="dialog-title">
+    {reading && <div className="reader-toolbar">
+      <button className="button" aria-label="Close reader" onClick={close}><X size={16} /> Close</button>
+    </div>}
+    <div className="dialog-top">
+      <h2 id="dialog-title">{title}</h2>
+      {!reading && <button className="settings-button" aria-label="Close dialog" onClick={close}><X size={20} /></button>}
+    </div>
     {children}
   </dialog>
 }

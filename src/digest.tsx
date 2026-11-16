@@ -12,6 +12,15 @@ export function SaveButton({ record, saved, ready, save, iconOnly = false }: {
   </button>
 }
 
+function FadingImage({ src, className = '', lazy, onError }: {
+  src: string; className?: string; lazy?: boolean; onError: () => void
+}) {
+  const [loaded, setLoaded] = useState(false)
+  return <img className={className + ' fade-image'} data-loaded={loaded} src={src} alt=""
+    loading={lazy ? 'lazy' : undefined} referrerPolicy="no-referrer"
+    onLoad={() => setLoaded(true)} onError={onError} />
+}
+
 export function Outlet({ article, dark }: { article: Article; dark: boolean }) {
   const light = validUrl(article.logoLight)
   const night = validUrl(article.logoDark)
@@ -19,7 +28,7 @@ export function Outlet({ article, dark }: { article: Article; dark: boolean }) {
   const url = (dark ? [night, light] : [light, night]).find(candidate => candidate && !failed.includes(candidate))
   return <span className="outlet">
     {url && <span className={'outlet-logo' + (dark && url === light && url !== night ? ' light-logo' : '')}>
-      <img src={url} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(previous => [...previous, url])} />
+      <FadingImage key={url} src={url} lazy onError={() => setFailed(previous => [...previous, url])} />
     </span>}
     {article.outlet || 'Article'}
   </span>
@@ -29,12 +38,12 @@ export function ArticleCard({ article, dark, read, open, children }: {
   article: Article; dark: boolean; read: boolean; open: () => void; children: React.ReactNode
 }) {
   const title = <>{article.emoji && <span>{article.emoji} </span>}{article.title}</>
-  return <article className={'card digest-article' + (article.feature ? ' clickable-card' : '')}>
+  return <article className="card digest-article clickable-card">
     <div className="article-byline"><Outlet article={article} dark={dark} /><span>{displayDate(article.date)}</span>
       {read && <span className="badge"><Check size={12} /> Read</span>}
     </div>
-    <h3>{article.feature ? <button className="record-title card-target" onClick={open}>{title}</button> : title}</h3>
-    {article.description && <p className="description article-summary">{article.description}</p>}
+    <h3><button className="record-title card-target" onClick={open}>{title}</button></h3>
+    {article.description && <p className="description news-summary">{article.description}</p>}
     {children && <div className="card-actions">{children}</div>}
   </article>
 }
@@ -117,6 +126,6 @@ export function Schedule({ items, today, isOpportunity, render }: {
 export function ArticleImage({ article }: { article: Article }) {
   const [failed, setFailed] = useState(false)
   const src = validUrl(article.image)
-  return src && !failed ? <img className="reader-image" src={src} alt="" referrerPolicy="no-referrer" onError={() => setFailed(true)} />
+  return src && !failed ? <FadingImage className="reader-image" src={src} onError={() => setFailed(true)} />
     : null
 }

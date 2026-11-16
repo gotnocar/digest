@@ -239,3 +239,24 @@ dialog::backdrop { background: #17263b55; }
 .transit-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 10px; margin-top: 5px; color: var(--muted); font-size: 12px; }
 .transit-link { display: inline-flex; align-items: center; gap: 4px; color: var(--accent); font-weight: 650; text-decoration: underline; text-underline-offset: 2px; }
 .field input { color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px; }
+
+.news-summary { margin-block: 2px 8px; }
+.fade-image { opacity: 0; transition: opacity 160ms ease-out; }
+.fade-image[data-loaded=true] { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .fade-image { transition: none; }
+}
+.reading-dialog { padding-top: 0; overscroll-behavior: contain; }
+.reader-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  margin-inline: -20px;
+  margin-bottom: 15px;
+  padding: 8px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.reading-dialog .dialog-top h2 { font-size: clamp(17px, 3vw, 21px); line-height: 1.3; }
