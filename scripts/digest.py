@@ -102,11 +102,16 @@ def ident(kind, *parts):
     return kind + '-' + hashlib.sha256(key.encode()).hexdigest()[:24]
 
 
+def news_edition(name):
+    return tab_day(name), bool(re.search(r'\bPM\s*$', name, re.IGNORECASE))
+
+
 def news_records(tabs):
     articles = {}
+    editions = {}
     logos = {}
-    for name, rows in sorted(tabs, key=lambda tab: tab_day(tab[0])):
-        date = tab_day(name)
+    for name, rows in sorted(tabs, key=lambda tab: news_edition(tab[0])):
+        date, afternoon = news_edition(name)
         if not date:
             continue
         for row in rows:
@@ -119,6 +124,8 @@ def news_records(tabs):
             logos[outlet.casefold()] = (url(row.get('Logo (light)', '')) or light,
                                        url(row.get('Logo (dark)', '')) or dark)
             key = ident('article', title, outlet)
+            articles.pop(key, None)
+            editions[key] = afternoon
             articles[key] = {
                 'id': key, 'kind': 'article', 'title': title, 'date': date,
                 'emoji': row.get('Emoji', ''), 'outlet': outlet, 'author': row.get('Author', ''),
@@ -131,7 +138,7 @@ def news_records(tabs):
             }
     for article in articles.values():
         article['logoLight'], article['logoDark'] = logos[article['outlet'].casefold()]
-    return sorted(articles.values(), key=lambda row: (row['date'], row['feature'], row['top']), reverse=True)
+    return sorted(articles.values(), key=lambda row: (row['date'], row['feature'], editions[row['id']], row['top']), reverse=True)
 
 
 def marked(text):

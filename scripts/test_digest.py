@@ -30,3 +30,11 @@ class DigestImportTests(unittest.TestCase):
         self.assertEqual((feature['feature'], feature['logoLight'], feature['logoDark'], feature['body']),
                          (True, light, dark, 'Feature body'))
         self.assertEqual((story['feature'], story['body']), (False, 'Daily body'))
+
+    def test_afternoon_stories_precede_morning_and_replace_duplicates(self):
+        records = news_records([
+            ('Nov 16, 2026 PM', [{'Story': 'Fresh'}, {'Story': 'Developing', 'Summary': 'Updated'}]),
+            ('Nov 16, 2026 AM', [{'Story': 'Morning', 'Top': '⭐'}, {'Story': 'Developing', 'Summary': 'Original'}]),
+        ])
+        self.assertEqual([row['title'] for row in records], ['Fresh', 'Developing', 'Morning'])
+        self.assertEqual(records[1]['description'], 'Updated')
