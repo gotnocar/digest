@@ -1,7 +1,7 @@
 name: Synchronize digest feeds
 on:
   schedule:
-    - cron: '15 7,13,19 * * *'
+    - cron: '45 7,16 * * *'
       timezone: America/New_York
   workflow_dispatch:
 permissions:

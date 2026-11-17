@@ -2,7 +2,7 @@ import { useEffect, useState, type ChangeEvent, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import {
   ArrowDown, ArrowDownToLine, ArrowLeft, ArrowRight, ArrowUpRight, BriefcaseBusiness, CalendarDays,
-  Bookmark, Check, ChevronDown, Ellipsis, EyeOff, FileText, MapPin, Moon, Newspaper, Search, Settings2, Sparkles, Sun, Users, X
+  Bookmark, Check, ChevronDown, Ellipsis, EyeOff, FileText, House, MapPin, Moon, Newspaper, Search, Settings2, Sparkles, Sun, Users, X
 } from 'lucide-react'
 import { useFeed } from './feed'
 import { readPersonal, subscribe, updatePersonal } from './storage'
@@ -55,7 +55,7 @@ function App() {
   const [origin, setOrigin] = useState(() => {
     try { return localStorage.getItem('digest:transit-origin') ?? '' } catch { return '' }
   })
-  const [showMore, setShowMore] = useState(false)
+  const [housingOnly, setHousingOnly] = useState(false)
   const [settings, setSettings] = useState(false)
   const [note, setNote] = useState<Job>()
   const [cv, setCV] = useState<Job>()
@@ -186,7 +186,7 @@ function App() {
   const checkIn = savedEvents.filter(event => event.date === yesterday && !attended.has(event.id))
   const checkInIds = new Set(checkIn.map(event => event.id))
   const listedOpportunities = (snapshot?.opportunities ?? []).filter(item =>
-    (item.date >= today || !item.date) && !/^(closed|expired|cancelled|canceled)$/i.test(item.sourceStatus)
+    (!housingOnly || /\bhousing\b/i.test(item.category)) && (item.date >= today || !item.date) && !/^(closed|expired|cancelled|canceled)$/i.test(item.sourceStatus)
   )
   const soon = listedOpportunities.filter(item => item.date && (item.top || item.deadlineSoon || item.date <= shiftDay(today, 6)))
     .sort((a, b) => Number(!!b.top) - Number(!!a.top) || Number(!!b.deadlineSoon) - Number(!!a.deadlineSoon) || a.date.localeCompare(b.date))
@@ -255,8 +255,9 @@ function App() {
       </section>
       {unavailable && <div className="notice" role="status">{snapshot ? 'Showing the last available digest.' : 'The digest feed is currently unavailable.'}</div>}
       <section aria-labelledby="section-title" className="listing">
-        <div className="section-top">
+        <div className={view === 'Opportunities' ? "section-top opportunities-heading" : "section-top"}>
           <h2 id="section-title">{headings[view]}</h2>
+          {view === 'Opportunities' && <button className="button" aria-pressed={housingOnly} onClick={() => setHousingOnly(!housingOnly)}><House size={17} /> Housing</button>}
           {view === 'Jobs' && <label className="search"><Search size={17} /><input type="search" placeholder="Search jobs..." aria-label="Search jobs" value={search} onChange={event => { setSearch(event.target.value); setPage(1) }} /></label>}
         </div>
         {(view === 'Jobs' || view === 'Saved') && <div className="filterbar">
@@ -288,7 +289,7 @@ function App() {
           </section>}
           {!allArticles.length && !reading.length && <Empty icon={<Newspaper />} title={loading ? 'Loading news…' : 'No recent news'} detail="New articles appear after the next spreadsheet update." />}
         </>}
-        {(view === 'Events' || view === 'Networking') && <Schedule
+        {(view === 'Events' || view === 'Networking') && <Schedule key={view}
           items={events.filter(event => /networking/i.test(event.category) === (view === 'Networking'))}
           today={today} isOpportunity={false} render={item => card(item)} />}
         {view === 'Opportunities' && <>
@@ -296,12 +297,9 @@ function App() {
             <div className="cards">{soon.map(item => card(item))}</div>
           </section>}
           {!!moreOpportunities.length && <div className="spaced">
-            <button className="button" aria-expanded={showMore} onClick={() => setShowMore(!showMore)}>
-              <ChevronDown size={16} /> {showMore ? 'Hide other opportunities' : 'Show all opportunities'}
-            </button>
-            {showMore && <Schedule items={moreOpportunities} today={today} isOpportunity render={(item, compact) => card(item, compact)} />}
+            <Schedule items={moreOpportunities} today={today} isOpportunity render={(item, compact) => card(item, compact)} />
           </div>}
-          {!listedOpportunities.length && <p className="quiet">No open opportunities.</p>}
+          {!listedOpportunities.length && <p className="quiet">{housingOnly ? 'No open housing opportunities.' : 'No open opportunities.'}</p>}
         </>}
         {view === 'Saved' && <>
           {(savedTab === 'all' || savedTab === 'event') && checkIn.length > 0 && <section className="group">

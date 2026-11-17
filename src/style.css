@@ -283,3 +283,6 @@ dialog::backdrop { background: #17263b55; }
 @media (prefers-reduced-motion: reduce) {
   .article-carousel { scroll-behavior: auto; }
 }
+
+.schedule-days { margin-bottom: 10px; }
+.section-top.opportunities-heading { flex-direction: row; align-items: center; }

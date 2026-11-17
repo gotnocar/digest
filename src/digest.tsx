@@ -101,7 +101,9 @@ export function ScheduleCard({ item, compact, tracked, open, origin, children }:
       <div className="card-content">
         <div className="card-title"><h3>{website ? <a className="record-title card-target" href={website} target="_blank" rel="noreferrer">{item.title}</a>
             : <button className="record-title card-target" onClick={open}>{item.title}</button>}</h3>
-          {!compact && (item.kind === 'event' ? item.top : item.top || item.deadlineSoon) && <span className="badge top">{item.kind === 'opportunity' && !item.top ? 'Deadline soon' : 'Top pick'}</span>}
+          {!compact && (item.kind === 'event' ? item.top : item.top || (item.deadlineSoon && !item.date)) &&
+            <span className="badge top">{item.top ? 'Top pick' : 'Deadline soon'}</span>}
+          {item.kind === 'opportunity' && item.date && <span className="badge top">Due {displayDate(item.date)}</span>}
         </div>
         <p className="meta">{scheduledMeta(item).filter(Boolean).join(' · ')}</p>
         {item.kind === 'event' && <div className="transit-meta">
@@ -123,6 +125,8 @@ export function SourceLink({ url, label }: { url: string; label: string }) {
 export function Schedule({ items, today, isOpportunity, render }: {
   items: (Event | Listing)[]; today: string; isOpportunity: boolean; render: (item: Event | Listing, compact: boolean) => React.ReactNode
 }) {
+  const [showTomorrow, setShowTomorrow] = useState(false)
+  const selected = showTomorrow ? shiftDay(today, 1) : today
   const weekEnd = shiftDay(today, 7 - (new Date(today + 'T12:00:00Z').getUTCDay() || 7))
   const days = new Map<string, (Event | Listing)[]>()
   for (const item of items) {
@@ -138,11 +142,15 @@ export function Schedule({ items, today, isOpportunity, render }: {
   ]
   return <>
     <section className="group schedule-today">
-      <h3>Today <span>{displayDate(today)}</span></h3>
-      {days.has(today) ? <div className="cards">{days.get(today)!.map(item => render(item, false))}</div>
-        : <p className="quiet">{isOpportunity ? 'No deadlines today.' : 'No listings for today.'}</p>}
+      {isOpportunity ? days.has(today) && <h3>Today <span>{displayDate(today)}</span></h3> :
+        <div className="filters schedule-days" role="group" aria-label="Event date">
+          <button aria-pressed={!showTomorrow} onClick={() => setShowTomorrow(false)}>Today · {displayDate(today)}</button>
+          <button aria-pressed={showTomorrow} onClick={() => setShowTomorrow(true)}>Tomorrow</button>
+        </div>}
+      {days.has(selected) ? <div className="cards">{days.get(selected)!.map(item => render(item, false))}</div>
+        : !isOpportunity && <p className="quiet">No listings for {showTomorrow ? 'tomorrow' : 'today'}.</p>}
     </section>
-    {sections.map(section => section.dates.length > 0 && <section className="group" key={section.label}>
+    {!showTomorrow && sections.map(section => section.dates.length > 0 && <section className="group" key={section.label}>
       <h3>{section.label}</h3>
       {section.dates.map(date => <div className="day-group" key={date}>
         {date && <h4>{displayDate(date)}</h4>}

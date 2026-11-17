@@ -20,7 +20,7 @@ Run `npm test` and `npm run build` to check the project. Use `npm run preview` t
 3. In **Actions**, run **Synchronize digest feeds**. The workflow updates the published feed and calls the Pages deployment workflow.
 4. Open the deployment URL shown in Actions. With the default GitHub Pages domain, it will be `https://YOUR-USERNAME.github.io/digest/`.
 
-The importer is scheduled for 7:15 AM, 1:15 PM, and 7:15 PM New York time. The workflow needs write access to `main` to commit validated feed snapshots. [GitHub Actions schedule documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)
+The importer is scheduled for 7:45 AM and 4:45 PM New York time. The workflow needs write access to `main` to commit validated feed snapshots. [GitHub Actions schedule documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)
 
 ## Google Sheets
 
