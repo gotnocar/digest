@@ -11,7 +11,7 @@ import {
   type Application, type Article, type Event, type Job, type Listing, type Personal, type Profile, type Savable, type Status
 } from './model'
 import { ArticleCard, ArticleCarousel, ArticleImage, Outlet, SaveButton, Schedule, ScheduleCard, SourceLink, TransitLink } from './digest'
-import { useTheme } from './theme'
+import { useDesign, useTheme } from './theme'
 import './style.css'
 
 type View = 'News' | 'Events' | 'Networking' | 'Opportunities' | 'Saved' | 'Jobs'
@@ -49,6 +49,7 @@ function App() {
   const [reader, setReader] = useState<Article>()
   const [detail, setDetail] = useState<Event | Listing>()
   const { theme, setTheme, dark } = useTheme()
+  const { design, setDesign } = useDesign()
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<'new' | 'old'>('new')
   const [page, setPage] = useState(1)
@@ -99,7 +100,7 @@ function App() {
   })
   const openArticle = (article: Article) => {
     setReader(article)
-    if (article.feature && storageReady) void commit(current => ({
+    if (storageReady) void commit(current => ({
       ...current,
       reading: {
         ...current.reading,
@@ -175,10 +176,14 @@ function App() {
   const currentPage = Math.min(page, pages)
   const visibleJobs = filteredJobs.slice((currentPage - 1) * LIST_SIZE, currentPage * LIST_SIZE)
   const allArticles = snapshot?.articles ?? []
-  const featuredArticles = allArticles.filter(article => article.feature)
-  const latestStories = allArticles.filter(article => !article.feature)
+  const featuredArticles = [...new Map([
+    ...allArticles.filter(article => article.feature && article.date >= shiftDay(today, -3) && article.date <= today),
+    ...saved.filter((item): item is Article => item.kind === 'article' && item.feature)
+  ].map(article => [article.id, article])).values()]
+  const latestStories = allArticles.filter(article => !article.feature &&
+    article.date >= shiftDay(today, -1) && article.date <= today)
   const reading = Object.values(personal.reading ?? {})
-    .filter(entry => entry.article.feature && !entry.read)
+    .filter(entry => !entry.read)
     .sort((a, b) => b.openedAt.localeCompare(a.openedAt))
   const activity = Object.values(personal.activity ?? {}).sort((a, b) => b.completedAt.localeCompare(a.completedAt))
   const attended = new Set(activity.map(entry => entry.item.id))
@@ -281,13 +286,13 @@ function App() {
         </> : <Empty icon={<BriefcaseBusiness />} title={loading ? 'Loading jobs…' : 'No jobs match this view'} detail={search ? 'Try a different search or filter.' : 'New listings appear after the daily update.'} />)}
         {view === 'News' && <>
           {featuredArticles.length > 0 && <ArticleCarousel articles={featuredArticles} render={article => card(article, false, false, true)} />}
-          {reading.length > 0 && <section className="group"><h3>Continue reading</h3>
-            <div className="cards article-grid">{reading.map(({ article }) => card(allArticles.find(item => item.id === article.id) ?? article))}</div>
-          </section>}
+          {reading.length > 0 && <ArticleCarousel title="📖 Continue reading"
+            articles={reading.map(({ article }) => allArticles.find(item => item.id === article.id) ?? article)}
+            render={article => card(article)} />}
           {latestStories.length > 0 && <section className="group"><h3>Latest stories</h3>
             <div className="cards article-grid">{latestStories.map(article => card(article))}</div>
           </section>}
-          {!allArticles.length && !reading.length && <Empty icon={<Newspaper />} title={loading ? 'Loading news…' : 'No recent news'} detail="New articles appear after the next spreadsheet update." />}
+          {!featuredArticles.length && !latestStories.length && !reading.length && <Empty icon={<Newspaper />} title={loading ? 'Loading news…' : 'No recent news'} detail="New articles appear after the next spreadsheet update." />}
         </>}
         {(view === 'Events' || view === 'Networking') && <Schedule key={view}
           items={events.filter(event => /networking/i.test(event.category) === (view === 'Networking'))}
@@ -321,6 +326,15 @@ function App() {
           {(['system', 'light', 'dark'] as const).map(value => <button key={value} aria-pressed={value === theme} onClick={() => setTheme(value)}>
             {{ system: 'System', light: 'Light', dark: 'Dark' }[value]}
           </button>)}
+        </div>
+      </section>
+      <section className="modal-section"><h3>Design</h3>
+        <div className="design-options" role="group" aria-label="Design">
+          {([['1', 'Design 1', 'Original'], ['2', 'Design 2', 'Editorial'], ['3', 'Design 3', 'News style']] as const).map(([value, label, name]) =>
+            <button key={value} className="design-option" aria-pressed={design === value} onClick={() => setDesign(value)}>
+              <span className={'design-swatch swatch-' + value} aria-hidden="true"><span /><span /><span /></span>
+              <strong>{label}</strong><span>{name}</span>
+            </button>)}
         </div>
       </section>
       <section className="modal-section"><h3>Transit directions</h3>
@@ -357,9 +371,9 @@ function App() {
       <div className="modal-actions reader-actions">
         <SourceLink url={reader.url} label="Open original" />
         {reader.feature && saveButton(reader)}
-        {reader.feature && <button className="button" disabled={!storageReady} onClick={() => toggleRead(reader)} aria-pressed={!!personal.reading?.[reader.id]?.read}>
+        <button className="button" disabled={!storageReady} onClick={() => toggleRead(reader)} aria-pressed={!!personal.reading?.[reader.id]?.read}>
           <Check size={16} /> {personal.reading?.[reader.id]?.read ? 'Read · Undo' : 'Mark as read'}
-        </button>}
+        </button>
       </div>
     </Modal>}
     {detail && <Modal title={detail.title} close={() => setDetail(undefined)} wide>

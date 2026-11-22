@@ -25,3 +25,19 @@ export function useTheme() {
   }, [dark, theme])
   return { theme, setTheme, dark }
 }
+
+export type Design = '1' | '2' | '3'
+export function useDesign() {
+  const [design, setDesign] = useState<Design>(() => {
+    try {
+      const stored = localStorage.getItem('digest:design')
+      if (stored === '2' || stored === '3') return stored
+    } catch {}
+    return '1'
+  })
+  useEffect(() => {
+    document.documentElement.dataset.design = design
+    try { localStorage.setItem('digest:design', design) } catch {}
+  }, [design])
+  return { design, setDesign }
+}

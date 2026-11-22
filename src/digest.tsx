@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from 'react'
+import { useId, useRef, useState, type ReactNode } from 'react'
 import { ArrowUpRight, Bookmark, Check, ChevronLeft, ChevronRight, MapPin } from 'lucide-react'
 import { displayDate, shiftDay, validUrl, type Article, type Event, type Listing, type Savable } from './model'
 
@@ -34,7 +34,8 @@ export function Outlet({ article, dark }: { article: Article; dark: boolean }) {
   </span>
 }
 
-export function ArticleCarousel({ articles, render }: { articles: Article[]; render: (article: Article) => ReactNode }) {
+export function ArticleCarousel({ articles, title = 'Top News', render }: { articles: Article[]; title?: string; render: (article: Article) => ReactNode }) {
+  const headingId = useId()
   const track = useRef<HTMLDivElement>(null)
   const [active, setActive] = useState(0)
   const index = Math.min(active, articles.length - 1)
@@ -44,9 +45,9 @@ export function ArticleCarousel({ articles, render }: { articles: Article[]; ren
     const next = Math.max(0, Math.min(articles.length - 1, index + step))
     element.scrollTo({ left: next * element.clientWidth })
   }
-  return <section className="group" aria-labelledby="top-news">
+  return <section className="group" aria-labelledby={headingId}>
     <div className="carousel-heading">
-      <h3 id="top-news">Top News</h3>
+      <h3 id={headingId}>{title}</h3>
       {articles.length > 1 && <div className="carousel-controls">
         <button className="icon-button button" aria-label="Previous article" disabled={index === 0} onClick={() => go(-1)}><ChevronLeft size={18} /></button>
         <span aria-live="polite">{index + 1} / {articles.length}</span>
